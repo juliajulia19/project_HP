@@ -7,71 +7,155 @@ import matplotlib.pyplot as plt
 from ruword_frequency import Frequency
 from collections import Counter
 
-list_sent_tok = [] #делаем список, в котором каждый элемент список токенов одного предложения
+list_sent_tok = []  # делаем список, в котором каждый элемент список токенов одного предложения
+
+
 def clean_text(sentences):
     for sent in sentences:
         text_str = sent.lower()  # нижний регистр
         text_list_nltk = word_tokenize(text_str)  # токенизация
-        text_clean = [word for word in text_list_nltk if word[0].isalpha()] #убираем пунктуацию
+        text_clean = [word for word in text_list_nltk if word[0].isalpha()]  # убираем пунктуацию
         list_sent_tok.append(text_clean)
     return list_sent_tok
 
-#стоп-слова не удаляем, тк иначе попадает много лишнего из предыдущих словосочетаний в биграммы с Гарри
+
+# стоп-слова не удаляем, тк иначе попадает много лишнего из предыдущих словосочетаний в биграммы с Гарри
 with open('full_text_HP.txt', encoding='utf-8') as f:
     text = f.read()
 
-hp_sent = sent_tokenize(text, language="russian") #разбиваем весь текст на предложения
+hp_sent = sent_tokenize(text, language="russian")  # разбиваем весь текст на предложения
 
-clean_lists = clean_text(hp_sent) #токенизируем и чистим каждое предложение
+clean_lists = clean_text(hp_sent)  # токенизируем и чистим каждое предложение
 
 mystem = Mystem()
 
 clean_lists_morph = []
-for list in clean_lists:  #берем предложение
-    lemmas = mystem.lemmatize(' '.join(list))  #лемматизируем
-    tagged = nltk.pos_tag(lemmas, lang='rus')  #добавляем морф разбор в виде кортежей
+for list in clean_lists:  # берем предложение
+    lemmas = mystem.lemmatize(' '.join(list))  # лемматизируем
+    tagged = nltk.pos_tag(lemmas, lang='rus')  # добавляем морф разбор в виде кортежей
     clean_result = []
     for elem in tagged:
-         if elem[1] != 'NONLEX':  # убираем пробелы, которые nltk разметил как NONLEX
-             tag_tog = '_'.join(elem) #соединяем слово и метку
-             clean_result.append(tag_tog) #собираем слова предложения с метками в список
-    clean_lists_morph.append(clean_result) #формируем список списков
+        if elem[1] != 'NONLEX':  # убираем пробелы, которые nltk разметил как NONLEX
+            tag_tog = '_'.join(elem)  # соединяем слово и метку
+            clean_result.append(tag_tog)  # собираем слова предложения с метками в список
+    clean_lists_morph.append(clean_result)  # формируем список списков
 
-bigrams_hp = []  #разбиваем каждое предложение на биграммы
+# разбиваем каждое предложение на биграммы
+bigrams_hp = []  # разбиваем каждое предложение на биграммы
 for sent in clean_lists_morph:
     bigrams = nltk.bigrams(sent)
     bigrams_hp.append(bigrams)
 
-#for bigram in bigrams_hp:
-    #print(list(bigram))  #не понимаю, как посмотреть все биграммы
-
+before_germ = []
+germ_bigrams = []
+before_ron = []
+ron_bigrams = []
 before_harry = []
 harry_bigrams = []
+before_drako = []
+drako_bigrams = []
+
+#собираем список слов перед именем героя и список биграмм, где герой на втором месте
+
 for i in bigrams_hp:
     for j in i:
-     if j[1] == 'гарри_S' or j[1] == 'поттер_S':  #находим все биграммы, где имя или фамилия героя второй элемент
-         before_harry.append(j[0])  #делаем список слов, которые идут перед именем героя
-         harry_bigrams.append(j)   #делаем список всех биграмм с именем героя
+        if j[1] == 'гермиона_S' or j[1] == 'грейнджер_S':
+            before_germ.append(j[0])
+            germ_bigrams.append(j)
+        elif j[1] == 'рон_S' or j[1] == 'рона_S':  #у Рона для поиска используем только имя, так как Уизли много
+            before_ron.append(j[0])
+            ron_bigrams.append(j)
+        elif j[1] == 'гарри_S' or j[1] == 'поттер_S':
+            before_harry.append(j[0])
+            harry_bigrams.append(j)
+        elif j[1] == 'драко_S' or j[1] == 'малфой_S':
+            before_drako.append(j[0])
+            drako_bigrams.append(j)
 
+#ищем прилагательные
 
+before_germ = ' '.join(before_germ)
+list_of_addj_germ = re.findall('[а-яА-ЯёЁ]+_A=m', before_germ)
+before_ron = ' '.join(before_ron)
+list_of_addj_ron = re.findall('[а-яА-ЯёЁ]+_A=m', before_ron)
 before_harry = ' '.join(before_harry)
-list_of_addj = re.findall('[а-яА-ЯёЁ]+_A=m', before_harry)  #находим все прилагательные по метке
+list_of_addj_harry = re.findall('[а-яА-ЯёЁ]+_A=m', before_harry)
+before_drako = ' '.join(before_drako)
+list_of_addj_drako = re.findall('[а-яА-ЯёЁ]+_A=m', before_drako)
 
-final_adj = []
-for i in list_of_addj:
-     adj = re.sub('_A=m', '', i) #убираем частеречные метки
-     final_adj.append(adj)
+#убираем частеречные метки
 
-print(final_adj) #'общий попал из-за словосочетания "в общем" перед Гарри
-print(len(final_adj))
+final_adj_germ = []
+for i in list_of_addj_germ:
+    adj = re.sub('_A=m', '', i)
+    final_adj_germ.append(adj)
 
-#wordcloud = WordCloud(width = 2000,
-                      #height = 1500,
-                      #background_color='black',
-                      #colormap='Pastel1').generate(', '.join(list_of_addj))
-#plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
-#plt.imshow(wordcloud) # Что изображаем
-#plt.axis("off") # Без подписей на осях
-#plt.show() # показать изображение
-print(Counter(final_adj).most_common(30))
+final_adj_ron = []
+for i in list_of_addj_ron:
+    adj = re.sub('_A=m', '', i)
+    final_adj_ron.append(adj)
 
+final_adj_harry = []
+for i in list_of_addj_harry:
+    adj = re.sub('_A=m', '', i)
+    final_adj_harry.append(adj)
+
+final_adj_drako = []
+for i in list_of_addj_drako:
+    adj = re.sub('_A=m', '', i)
+    final_adj_drako.append(adj)
+
+#смотрим какие прилагательные нашлись и их общее количество
+
+print(final_adj_germ)
+print(len(final_adj_germ))
+print(final_adj_ron)
+print(len(final_adj_ron))
+print(final_adj_harry)
+print(len(final_adj_harry))
+print(final_adj_drako)
+print(len(final_adj_drako))
+
+# облако гермиона
+# wordcloud = WordCloud(width = 2000,
+#                       height = 1500,
+#                       background_color='black',
+#                       colormap='Pastel1').generate(', '.join(final_adj_germ))
+# plt.title('Гермиона Грейнджер')
+# plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
+# plt.imshow(wordcloud) # Что изображаем
+# plt.axis("off") # Без подписей на осях
+# plt.show() # показать изображение
+#
+# #облако рон
+# wordcloud2 = WordCloud(width = 2000,
+#                       height = 1500,
+#                       background_color='black',
+#                       colormap='Pastel1').generate(', '.join(final_adj_ron))
+# plt.title('Рон Уизли')
+# plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
+# plt.imshow(wordcloud) # Что изображаем
+# plt.axis("off") # Без подписей на осях
+# plt.show() # показать изображение
+
+# #облако гарри
+# wordcloud = WordCloud(width = 2000,
+#                       height = 1500,
+#                       background_color='black',
+#                       colormap='Pastel1').generate(', '.join(final_adj_harry))
+# plt.title('Гарри Поттер')
+# plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
+# plt.imshow(wordcloud) # Что изображаем
+# plt.axis("off") # Без подписей на осях
+# plt.show() # показать изображение
+#
+# #облако драко
+# wordcloud = WordCloud(width = 2000,
+#                       height = 1500,
+#                       background_color='black',
+#                       colormap='Pastel1').generate(', '.join(final_adj_drako))
+# plt.title('Драко Малфой')
+# plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
+# plt.imshow(wordcloud) # Что изображаем
+# plt.axis("off") # Без подписей на осях
+# plt.show() # показать изображение

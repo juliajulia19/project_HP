@@ -6,6 +6,9 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from ruword_frequency import Frequency
 from collections import Counter
+import numpy as np
+from PIL import Image
+from collections import Counter
 
 list_sent_tok = []  # делаем список, в котором каждый элемент список токенов одного предложения
 
@@ -52,8 +55,7 @@ before_ron = []
 ron_bigrams = []
 before_harry = []
 harry_bigrams = []
-before_drako = []
-drako_bigrams = []
+
 
 #собираем список слов перед именем героя и список биграмм, где герой на втором месте
 
@@ -68,9 +70,7 @@ for i in bigrams_hp:
         elif j[1] == 'гарри_S' or j[1] == 'поттер_S':
             before_harry.append(j[0])
             harry_bigrams.append(j)
-        elif j[1] == 'драко_S' or j[1] == 'малфой_S':
-            before_drako.append(j[0])
-            drako_bigrams.append(j)
+
 
 #ищем прилагательные
 
@@ -80,8 +80,6 @@ before_ron = ' '.join(before_ron)
 list_of_addj_ron = re.findall('[а-яА-ЯёЁ]+_A=m', before_ron)
 before_harry = ' '.join(before_harry)
 list_of_addj_harry = re.findall('[а-яА-ЯёЁ]+_A=m', before_harry)
-before_drako = ' '.join(before_drako)
-list_of_addj_drako = re.findall('[а-яА-ЯёЁ]+_A=m', before_drako)
 
 #убираем частеречные метки
 
@@ -100,62 +98,56 @@ for i in list_of_addj_harry:
     adj = re.sub('_A=m', '', i)
     final_adj_harry.append(adj)
 
-final_adj_drako = []
-for i in list_of_addj_drako:
-    adj = re.sub('_A=m', '', i)
-    final_adj_drako.append(adj)
 
-#смотрим какие прилагательные нашлись и их общее количество
+#смотрим какие прилагательные нашлись и их частотность
 
-print(final_adj_germ)
-print(len(final_adj_germ))
-print(final_adj_ron)
-print(len(final_adj_ron))
-print(final_adj_harry)
-print(len(final_adj_harry))
-print(final_adj_drako)
-print(len(final_adj_drako))
+print(Counter(final_adj_harry).most_common(50))
+print(Counter(final_adj_ron).most_common(50))
+print(Counter(final_adj_germ).most_common(50))
 
-# облако гермиона
-# wordcloud = WordCloud(width = 2000,
-#                       height = 1500,
-#                       background_color='black',
-#                       colormap='Pastel1').generate(', '.join(final_adj_germ))
-# plt.title('Гермиона Грейнджер')
-# plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
-# plt.imshow(wordcloud) # Что изображаем
-# plt.axis("off") # Без подписей на осях
-# plt.show() # показать изображение
-#
-# #облако рон
-# wordcloud2 = WordCloud(width = 2000,
-#                       height = 1500,
-#                       background_color='black',
-#                       colormap='Pastel1').generate(', '.join(final_adj_ron))
-# plt.title('Рон Уизли')
-# plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
-# plt.imshow(wordcloud) # Что изображаем
-# plt.axis("off") # Без подписей на осях
-# plt.show() # показать изображение
+germ_mask = np.array(Image.open("germ.jpeg"))
+ron_mask = np.array(Image.open("Ron.jpeg"))
+harry_mask = np.array(Image.open("Harry.jpeg"))
 
-# #облако гарри
-# wordcloud = WordCloud(width = 2000,
-#                       height = 1500,
-#                       background_color='black',
-#                       colormap='Pastel1').generate(', '.join(final_adj_harry))
-# plt.title('Гарри Поттер')
-# plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
-# plt.imshow(wordcloud) # Что изображаем
-# plt.axis("off") # Без подписей на осях
-# plt.show() # показать изображение
-#
-# #облако драко
-# wordcloud = WordCloud(width = 2000,
-#                       height = 1500,
-#                       background_color='black',
-#                       colormap='Pastel1').generate(', '.join(final_adj_drako))
-# plt.title('Драко Малфой')
-# plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
-# plt.imshow(wordcloud) # Что изображаем
-# plt.axis("off") # Без подписей на осях
-# plt.show() # показать изображение
+#облако гарри
+wordcloud3 = WordCloud(width = 2000,
+                      height = 1500,
+                      mask=harry_mask,
+                      contour_width=3,
+                      contour_color='steelblue',
+                      background_color='black',
+                      colormap='Pastel1').generate(', '.join(final_adj_harry))
+plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
+plt.imshow(wordcloud3) # Что изображаем
+plt.title('Гарри Поттер')
+plt.axis("off") # Без подписей на осях
+plt.show() # показать изображение
+
+#облако гермиона
+wordcloud = WordCloud(width = 2000,
+                      height = 1500,
+                      mask=germ_mask,
+                      contour_width=3,
+                      contour_color='steelblue',
+                      background_color='black',
+                      colormap='Pastel1').generate(', '.join(final_adj_germ))
+plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
+plt.imshow(wordcloud) # Что изображаем
+plt.title('Гермиона Грейнджер')
+plt.axis("off") # Без подписей на осях
+plt.show() # показать изображение
+
+#облако рон
+wordcloud2 = WordCloud(width = 2000,
+                      height = 1500,
+                      mask=ron_mask,
+                      contour_width=3,
+                      contour_color='steelblue',
+                      background_color='black',
+                      colormap='Pastel1').generate(', '.join(final_adj_ron))
+plt.figure(figsize=(40, 30)) # Устанавливаем размер картинки
+plt.imshow(wordcloud2) # Что изображаем
+plt.title('Рон Уизли')
+plt.axis("off") # Без подписей на осях
+plt.show() # показать изображение
+
